@@ -51,6 +51,7 @@ namespace MDSysExToMidi
             byte[] fileBytes = File.ReadAllBytes(@"c:\temp\md010308.syx");
             var i = 0;
             var midiFileNumber = 0;
+            int filesWritten = 0;
             while (i < fileBytes.Length)
             {
                 var ix = SeekSysexSequence(i, PatternHeader, fileBytes);
@@ -75,6 +76,7 @@ namespace MDSysExToMidi
 
                     Pattern pattern = GetPatternFromBytes(trigPatternBytes);
                     PatternToMidiFile($"output-{midiFileNumber++}.mid", pattern);
+                    filesWritten++;
 
                     ix = seqStartIndex + 0x1521;
                     i = ix;
@@ -103,6 +105,7 @@ namespace MDSysExToMidi
             var midiBytes = new List<byte>();
             int deltaTicks = 0;
             int rootNote = 60;
+            bool firstMidiEvent = true;
             for (var trigIx = 0; trigIx < 32; trigIx++)
             {
                 var noteOns = new List<NoteEvent>();
@@ -125,14 +128,18 @@ namespace MDSysExToMidi
                     foreach (var noteOn in noteOns)
                     {
                         AppendVariableLengthValue(noteOn.DeltaTicks, midiBytes);
-                        midiBytes.Add((byte)noteOn.Type);
+                        // Utilize "running status" by only specifying the event type the first time
+                        if (firstMidiEvent)
+                        {
+                            midiBytes.Add((byte)noteOn.Type);
+                            firstMidiEvent = false;
+                        }
                         midiBytes.Add(noteOn.Pitch);
                         midiBytes.Add(noteOn.Velocity);
                     }
                     foreach (var noteOff in noteOffs)
                     {
                         midiBytes.Add((byte)noteOff.DeltaTicks);
-                        midiBytes.Add((byte)noteOff.Type);
                         midiBytes.Add(noteOff.Pitch);
                         midiBytes.Add(noteOff.Velocity);
                     }
@@ -148,10 +155,11 @@ namespace MDSysExToMidi
             midiBytes.Add(0x2F);
             midiBytes.Add(0);
             byte[] lengthBytes = new byte[4];
-            lengthBytes[0] = (byte)((midiBytes.Count & 0xff000000) >> 6);
-            lengthBytes[1] = (byte)((midiBytes.Count & 0x00ff0000) >> 4);
-            lengthBytes[2] = (byte)((midiBytes.Count & 0x0000ff00) >> 2);
-            lengthBytes[3] = (byte)(midiBytes.Count & 0x000000ff);
+            int count = midiBytes.Count;
+            lengthBytes[0] = (byte)((count & 0xff000000) >> 24);
+            lengthBytes[1] = (byte)((count & 0x00ff0000) >> 16);
+            lengthBytes[2] = (byte)((count & 0x0000ff00) >> 8);
+            lengthBytes[3] = (byte)(count & 0x000000ff);
 
             byte[] bytesToWrite = MidiHeaderBytes.Concat(lengthBytes).Concat(midiBytes).ToArray();
             File.WriteAllBytes($@"c:\temp\{filename}", bytesToWrite);
