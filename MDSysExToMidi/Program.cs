@@ -67,14 +67,15 @@ namespace MDSysExToMidi
                     byte tempoMultiplier = fileBytes[seqStartIndex + 0xB3];
                     byte scale = fileBytes[seqStartIndex + 0xB4];
                     byte kit = fileBytes[seqStartIndex + 0xB5];
-                    byte[] locks = GetDecodedBytes(seqStartIndex + 0xB7, 2341, fileBytes);
-                    byte[] extraPattern = GetDecodedBytes(seqStartIndex + 0x9DC, 234, fileBytes);
-                    byte[] extraPattern64 = GetDecodedBytes(seqStartIndex + 0xAC6, 2647, fileBytes);
+                    byte[] lockBytes = GetDecodedBytes(seqStartIndex + 0xB7, 2341, fileBytes);
+                    byte[] extraPatternBytes = GetDecodedBytes(seqStartIndex + 0x9DC, 234, fileBytes);
+                    byte[] extraPattern64Bytes = GetDecodedBytes(seqStartIndex + 0xAC6, 2647, fileBytes);
 
                     bool check = (fileBytes[seqStartIndex + 0x1521] == 0xf7);
                     Console.WriteLine("Done " + (check ? "successfully" : "with errors"));
 
                     Pattern pattern = GetPatternFromBytes(trigPatternBytes);
+//                    AddExtraPattern64(pattern, extraPattern64Bytes);
                     PatternToMidiFile($"output-{midiFileNumber++}.mid", pattern);
                     filesWritten++;
 
@@ -104,7 +105,7 @@ namespace MDSysExToMidi
         {
             var midiBytes = new List<byte>();
             int deltaTicks = 0;
-            int rootNote = 60;
+            int rootNote = 36;
             bool firstMidiEvent = true;
             for (var trigIx = 0; trigIx < 32; trigIx++)
             {
@@ -198,7 +199,7 @@ namespace MDSysExToMidi
                 byte currentByte = trigPatternBytes[offset + byteCountInverse--];
                 for (var b = 0; b < 8; b++)
                 {
-                    track.Trigs[(byteCount * 8) + b] = ((currentByte & (1 << b)) >> b) == 1;
+                    track.Trigs[(byteCount * 8) + b] = (currentByte & (1 << b)) > 0;
                 }
                 byteCount++;
             }
