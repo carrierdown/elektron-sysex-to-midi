@@ -4,6 +4,8 @@ This is a simple tool to convert pattern data from MachineDrum SysEx dump files 
 
 This tool could also be useful as a starting point for anyone wishing to utilize patterns or other data from their MachineDrum/MonoMachine devices.
 
+![One of the resulting MIDI files imported into Ableton Live](https://raw.github.com/carrierdown/elektron-sysex-to-midi/master/pattern.png)
+
 ## What's contained in this repository?
 
 - Source code for the tool itself
@@ -12,8 +14,8 @@ This tool could also be useful as a starting point for anyone wishing to utilize
 
 ## Possible enhancements
 
-- Support for accents
-- Support for swing
+- Support for MonoMachine
+- Support for additional pattern data like accents & swing
 - Conversion of the kit information into a human-readable format.
 
 ## Contact
