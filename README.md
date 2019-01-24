@@ -12,4 +12,4 @@ This tool could also be useful as a starting point for anyone wishing to utilize
 
 ## Contact
 
-If you have any questions or suggestions, hit me up at twitter.com/knupland. Alternatively, you can file an issue in this repo if it's a more general request regarding this tool.
+If you have any questions or suggestions, hit me up at <http://twitter.com/knupland>. Alternatively, you can file an issue in this repo if it's a more general request regarding this tool.
