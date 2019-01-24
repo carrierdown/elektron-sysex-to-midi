@@ -19,8 +19,6 @@ namespace MDSysExToMidi
     {
         private static byte[] PatternHeader = new byte[] { 0xF0, 0x00, 0x20, 0x3C, 0x02, 0x00, 0x67, 0x03, 0x01 };
 
-        private List<Pattern> DecodedPatterns = new List<Pattern>();
-
         // MIDI header info for simple 1-track 96 PPQ file
         private static byte[] MidiHeaderBytes = new byte[] {
             /* header chunk id */       0x4D, 0x54, 0x68, 0x64, 
@@ -48,10 +46,24 @@ namespace MDSysExToMidi
 
         static void Main(string[] args)
         {
-            byte[] fileBytes = File.ReadAllBytes(@"c:\temp\md010308.syx");
-            var i = 0;
-            var midiFileNumber = 0;
-            int filesWritten = 0;
+            if (args.Length < 1)
+            {
+                Console.WriteLine("No arguments given. Usage: MDSysExToMidi filename.syx");
+                return;
+            }
+            string filename = args[0];
+            if (!File.Exists(filename))
+            {
+                Console.WriteLine($@"File {filename} was not found. Please specify a valid path and filename, e.g. c:\temp\mysysexfile.syx");
+                return;
+            }
+
+            byte[] fileBytes = File.ReadAllBytes(filename);
+            int i = 0,
+                midiFileNumber = 0;
+
+            Console.WriteLine($"Parsing file {filename}");
+
             while (i < fileBytes.Length)
             {
                 var ix = SeekSysexSequence(i, PatternHeader, fileBytes);
@@ -72,12 +84,11 @@ namespace MDSysExToMidi
                     byte[] extraPattern64Bytes = GetDecodedBytes(seqStartIndex + 0xAC6, 2647, fileBytes);
 
                     bool check = (fileBytes[seqStartIndex + 0x1521] == 0xf7);
-                    Console.WriteLine("Done " + (check ? "successfully" : "with errors"));
+                    Console.WriteLine($"Wrote output-{midiFileNumber}.mid {(check ? "successfully" : "with errors")}");
 
                     Pattern pattern = GetPatternFromBytes(trigPatternBytes);
-//                    AddExtraPattern64(pattern, extraPattern64Bytes);
+                    AddExtraPattern64(pattern, extraPattern64Bytes);
                     PatternToMidiFile($"output-{midiFileNumber++}.mid", pattern);
-                    filesWritten++;
 
                     ix = seqStartIndex + 0x1521;
                     i = ix;
@@ -101,13 +112,35 @@ namespace MDSysExToMidi
             return pattern;
         }
 
+        static void AddExtraPattern64(Pattern pattern, byte[] extraPatternBytes)
+        {
+            int byteIndex = 0,
+                trackIx = 0;
+            while (byteIndex < 64)
+            {
+                var byteCountInverse = 3;
+                var byteCount = 0;
+                for (var i = byteIndex; i < byteIndex + 4; i++)
+                {
+                    byte currentByte = extraPatternBytes[byteIndex + byteCountInverse--];
+                    for (var b = 0; b < 8; b++)
+                    {
+                        pattern.Tracks[trackIx].Trigs[32 + (byteCount * 8) + b] = (currentByte & (1 << b)) > 0;
+                    }
+                    byteCount++;
+                }
+                byteIndex += 4;
+                trackIx++;
+            }
+        }
+
         static void PatternToMidiFile(string filename, Pattern pattern)
         {
             var midiBytes = new List<byte>();
             int deltaTicks = 0;
             int rootNote = 36;
             bool firstMidiEvent = true;
-            for (var trigIx = 0; trigIx < 32; trigIx++)
+            for (var trigIx = 0; trigIx < 64; trigIx++)
             {
                 var noteOns = new List<NoteEvent>();
                 for (var trackIx = 0; trackIx < pattern.Tracks.Length; trackIx++)
@@ -125,9 +158,6 @@ namespace MDSysExToMidi
                     foreach (var noteOn in noteOns)
                     {
                         noteOffs.Add(new NoteEvent { DeltaTicks = (i++ == 0 ? 0x18 : 0), Pitch = noteOn.Pitch, Type = EventType.NoteOff, Velocity = 0 });
-                    }
-                    foreach (var noteOn in noteOns)
-                    {
                         AppendVariableLengthValue(noteOn.DeltaTicks, midiBytes);
                         // Utilize "running status" by only specifying the event type the first time
                         if (firstMidiEvent)
