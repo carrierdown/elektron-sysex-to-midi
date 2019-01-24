@@ -4,6 +4,12 @@ This is a simple tool to convert pattern data from MachineDrum SysEx dump files 
 
 This tool could also be useful as a starting point for anyone wishing to utilize patterns or other data from their MachineDrum/MonoMachine devices.
 
+## What's contained in this repository?
+
+- Source code for the tool itself
+- Windows (x64) executable in the `dist` folder (more platforms can be added if there is demand)
+- The extracted MIDI files from the Autechre SysEx dumps (`ae-machinedrum-midi.zip`)
+
 ## Possible enhancements
 
 - Support for accents
