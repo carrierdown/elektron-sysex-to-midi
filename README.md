@@ -10,7 +10,7 @@ This tool could also be useful as a starting point for anyone wishing to utilize
 
 - Source code for the tool itself
 - Windows (x64) executable in the `dist` folder (more platforms can be added if there is demand)
-- The extracted MIDI files from the Autechre SysEx dumps (`ae-machinedrum-midi.zip`)
+- The extracted MIDI files from the Autechre SysEx dumps ([`ae-machinedrum-midi.zip`](https://github.com/carrierdown/elektron-sysex-to-midi/blob/master/ae-machinedrum-midi.zip))
 
 ## Possible enhancements
 
